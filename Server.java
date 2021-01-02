@@ -16,7 +16,7 @@ public class Server implements Runnable {
   MySocket mysck;
   String nickname;
   public static boolean next = false; //Estara en true quan l'usuari tingui un nom vàlid i no estigui utilitzat ja
-  public static boolean userconnected = true;
+
 
   //Constructor
   public Server(String nickname, MySocket mysck) throws IOException {

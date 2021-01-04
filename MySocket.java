@@ -62,9 +62,13 @@ public class MySocket extends Socket {
 
   public String read() {
     //Per lectura socket
-    String linia = br.readLine();
+    String linia = null;
+    try{
+    linia = br.readLine();
+    } catch(IOException e) {
+    e.printStackTrace();
+    }
     return linia;
-
   }
 
   //Metode close

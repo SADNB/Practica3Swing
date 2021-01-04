@@ -39,6 +39,7 @@ public class Server implements Runnable {
           //next = false. Com no compleix condicio, tornara a preguntar.
         }else {
           System.out.println(read_nickname + " esta connectat ");
+          mysocket.println("connectat");
           //Afegim el nom d'usuari i el socket a la llista i executem el thread
 	        userslist.put(read_nickname, mysocket); //El nou usuari al xat s'afegeix a la llista de usuaris connectats
           new Thread(new Server(read_nickname, mysocket)).start(); //Executem el thread i inicialitzem
@@ -51,6 +52,40 @@ public class Server implements Runnable {
 
   @Override
   public void run() {
+    String linia;
 
+          while ((linia = mysck.readLine()) != null) {
+              boolean actiu = actiu(nickname, linia); //Informa de l'estat de l'usuari. Si està actiu i no escriu 'Marxo', es mostrara el que ha introduit pel terminal
+              if (actiu) {    //actiu == true
+                  for (MySocket ms : userslist.values()) {
+                      if (ms != mysck) {
+                          ms.println(nickname + ": " + linia);
+                          System.out.println(nickname + " ha escrit: " + linia);
+                      }
+                  }
+              }
+          }
+      }
 
+      public boolean actiu(String nickname, String linia) {     //Retorna el estat de l'usuari, si esta connectat o vol deixar d'estar-ho
+          boolean actiu = true;
+          if (linia.equals("Marxo")) {    //Si un usuari escriu Marxo, el programa sabrà que l'usuari es vol desconnectar del xat
+              userslist.remove(nickname); //L'eliminem de la llista de connectats al xat
+
+              for (MySocket ms : userslist.values()) {
+                  if (ms != mysck) {                    //Escriurà les seguents frases en els sockets creats connectats (usuaris) per informar que l'usuari 'x' ha marxat de la conversa
+                                                        //Sortiran en la resta de clients, pero no en el de l'usuari que marxa
+                                                        //També informara de la situació actual al server
+                      //System.out.println(nickname + " es troba desconnectat. ");
+    		              ms.println(nickname + ": Marxo");
+                      ms.println(nickname + ": : ha abandonat la conversa.");
+                      System.out.println(nickname + " ha escrit: Marxo");
+                      System.out.println(nickname + " es troba desconnectat.");
+                  }
+
+              }
+              actiu = false;    //Ara el usuari determinat estarà desconnectat, i per tant el seu estat actiu serà false.
+          }
+          return actiu; //Retronem el estat del boolean
+    }
 }

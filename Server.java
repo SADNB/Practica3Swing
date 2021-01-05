@@ -39,9 +39,10 @@ public class Server implements Runnable {
           //next = false. Com no compleix condicio, tornara a preguntar.
         }else {
           System.out.println(read_nickname + " esta connectat ");
-          mysocket.println("connectat");
           //Afegim el nom d'usuari i el socket a la llista i executem el thread
 	        userslist.put(read_nickname, mysocket); //El nou usuari al xat s'afegeix a la llista de usuaris connectats
+          mysocket.println("connectat");
+          enviarLlista();
           new Thread(new Server(read_nickname, mysocket)).start(); //Executem el thread i inicialitzem
           next = true; //Posem a true el boolean perque ja ha complit la condicio de tenir un nom valid d'usuari
         }
@@ -69,8 +70,8 @@ public class Server implements Runnable {
 
       public boolean actiu(String nickname, String linia) {     //Retorna el estat de l'usuari, si esta connectat o vol deixar d'estar-ho
           boolean actiu = true;
+            enviarLlista();
           if (linia.equals("Marxo")) {    //Si un usuari escriu Marxo, el programa sabrà que l'usuari es vol desconnectar del xat
-              userslist.remove(nickname); //L'eliminem de la llista de connectats al xat
 
               for (MySocket ms : userslist.values()) {
                   if (ms != mysck) {                    //Escriurà les seguents frases en els sockets creats connectats (usuaris) per informar que l'usuari 'x' ha marxat de la conversa
@@ -84,8 +85,24 @@ public class Server implements Runnable {
                   }
 
               }
+              userslist.get(nickname).close();
+              userslist.remove(nickname); //L'eliminem de la llista de connectats al xat
+              enviarLlista();
               actiu = false;    //Ara el usuari determinat estarà desconnectat, i per tant el seu estat actiu serà false.
           }
-          return actiu; //Retronem el estat del boolean
-    }
+
+        return actiu; //Retronem el estat del boolean
+      }
+
+    public static void enviarLlista(){
+      String llistausuaris ="";
+      for (ConcurrentHashMap.Entry<String,MySocket> chmap : userslist.entrySet()){
+          llistausuaris =llistausuaris + chmap.getKey() + " ";
+        }
+      for (ConcurrentHashMap.Entry<String,MySocket> chmap : userslist.entrySet()){
+          chmap.getValue().println(".actualitza");
+          chmap.getValue().println(llistausuaris);
+        }
+      }
+
 }

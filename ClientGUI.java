@@ -11,14 +11,17 @@ public class ClientGUI{
   JTextArea messages;
   String messageToSend;
   JTextField mtosend;
-//  JList userslist;
+  JTextArea userstextarea;
+  JList<String> list;
+  DefaultListModel<String> dlmodel;
+  boolean connected;
+
   public static void main(String[] args) {
     try{
       UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
     }catch (Exception e) {}
     ClientGUI newclient = new ClientGUI();
     newclient.introView();
-  //  newclient.chatView();
   }
 
   public ClientGUI(){
@@ -26,6 +29,9 @@ public class ClientGUI{
     this.mysocket = new MySocket("localhost", 4000);
     this.intro = new JFrame("Log in");
     this.principal = new JFrame("Client Chat App");
+    this.dlmodel = new DefaultListModel<String>();
+    this.list = new JList<String>(this.dlmodel);
+    this.connected=false;
   }
 
   public void introView(){
@@ -36,9 +42,9 @@ public class ClientGUI{
     JPanel intropanel = new JPanel();
     intropanel.setLayout(new BoxLayout(intropanel,BoxLayout.LINE_AXIS));
     usernamefield = new JTextField(25);
-    JButton button = new JButton("Enter");
+    JButton button = new JButton("Enregistrat!");
     button.addActionListener(new enterUsername());
-    JLabel uflabel= new JLabel("Enter Username:  ");
+    JLabel uflabel= new JLabel("Introdueixi nom d'usuari:  ");
     intropanel.add(uflabel);
     intropanel.add(usernamefield);
     intropanel.add(Box.createHorizontalStrut(25));
@@ -56,7 +62,7 @@ public class ClientGUI{
 
     JPanel chatpanel = new JPanel();
     chatpanel.setLayout(new BoxLayout(chatpanel,BoxLayout.PAGE_AXIS));
-    messages = new JTextArea(20,30);
+    messages = new JTextArea(20,50);
     messages.setEditable(false);
     chatpanel.add(new JScrollPane(messages));
     messages.setLineWrap(true);
@@ -65,15 +71,22 @@ public class ClientGUI{
     JPanel msgpanel = new JPanel();
     msgpanel.setLayout(new BoxLayout(msgpanel,BoxLayout.LINE_AXIS));
     mtosend = new JTextField(25);
-    JButton sendbutton = new JButton("Send");
+    JButton sendbutton = new JButton("Envia");
     sendbutton.addActionListener(new sendMessage());
-    JLabel slabel= new JLabel("Write your message:  ");
+    JLabel slabel= new JLabel("Escriu el teu missatge:  ");
     msgpanel.add(slabel);
     msgpanel.add(mtosend);
     msgpanel.add(sendbutton);
 
+    JPanel userpanel = new JPanel();
+    userpanel.setLayout(new BoxLayout(userpanel,BoxLayout.PAGE_AXIS));
+    JScrollPane scrollpanel = new JScrollPane(list);
+    scrollpanel.setPreferredSize(new Dimension(100, 400));
+    userpanel.add(scrollpanel);
 
-    principal.add(chatpanel,BorderLayout.CENTER);
+
+    principal.add(chatpanel,BorderLayout.LINE_START);
+    principal.add(userpanel,BorderLayout.LINE_END);
     principal.add(msgpanel,BorderLayout.PAGE_END);
     principal.pack();
     principal.setLocationRelativeTo(null);
@@ -89,6 +102,7 @@ public class ClientGUI{
           if(servermsg.contains("connectat")){
             intro.setVisible(false);
             chatView();
+            connected=true;
             MessageThread msth = new MessageThread();
             msth.start();
           }
@@ -106,29 +120,39 @@ public class ClientGUI{
     }
   }
 
-  public class MessageThread extends Thread {
+ public class MessageThread extends Thread {
   public void run() {
+  while(connected){
     String missatge;
     missatge = mysocket.readLine();
-    switch(missatge) {
-      case ".llistaActualitzada":
-        //llistaActualitzada();
+    switch (missatge) {
+      case "Marxo":
+        connected = false;
         break;
-      case ".desconnexio":
-        //userconnected = false;
+      case ".actualitza":
+        llistaActualitzada();
         break;
       default:
-      messages.append(missatge + " \n"); //Afegirà el contingut passat per el paràmetre StringBuffer missatge
+        messages.append(missatge + " \n"); //Afegirà el contingut passat per el paràmetre StringBuffer missatge
+        break;
+        }
+      }
     }
   }
-  /*public void llistaActualitzada() {
+  public void llistaActualitzada() {
     String line;
     line = mysocket.readLine();
-    String[] list = line.split(" ");
-    model.removeAllElements();
-    for (String list1 : list) {
-        model.addElement(list1);
+    String[] listofusers = line.split(" ");
+    dlmodel.removeAllElements();
+    for (String list1 : listofusers) {
+        dlmodel.addElement(list1);
       }
-    }*/
+    /*userstextarea.removeAll();
+    userstextarea.append(this.list.getComponents().toString());*/
+  }
+
+  public void close() {
+      mysocket.close();
+      principal.dispose();
   }
 }
